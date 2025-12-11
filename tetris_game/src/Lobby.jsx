@@ -13,6 +13,8 @@ const Lobby = () => {
   const navigate = useNavigate();
   const username = localStorage.getItem("username") || "";
 
+  const [livePlayers, setLivePlayers] = useState([]);
+
   const fetchData = async () => {
     try {
       const [playersRes, rankingsRes, lastRes] = await Promise.all([
@@ -30,6 +32,16 @@ const Lobby = () => {
   };
 
   useEffect(() => {
+    const playersRef = ref(db, "players");
+    const unsub = onValue(playersRef, (snap) => {
+      const data = snap.val() || {};
+      const list = Object.values(data).map(p => p.username);
+      setLivePlayers(list);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
@@ -41,7 +53,6 @@ const Lobby = () => {
     const gameRef = ref(db, "game/state");
     const unsub = onValue(gameRef, (snap) => {
       const data = snap.val();
-      console.log("App game state:", data); 
       if (data?.status === "playing") {
         navigate(`/game/${username}`);
       }
@@ -50,12 +61,12 @@ const Lobby = () => {
     return () => unsub();
   }, [username, navigate]);
 
+
   useEffect(() => {
     if (!username) return;
 
     const handleKey = async (e) => {
       if (e.key === "Enter") {
-        console.log("Sending game start to Firebase");
         try {
           await update(ref(db, "game/state"), {
             status: "playing",
@@ -90,23 +101,22 @@ const Lobby = () => {
         .catch((err) => console.error("Failed to register player:", err));
     }
   }, [username]);
-
-  console.log("Lobby username:", username);
-
   
   return (
     <div className="lobby-screen">
       <h1>Game Lobby</h1>
-      <div
-        style={{
-          color: "#0f0",
-          marginBottom: "20px",
-          fontSize: "18px",
-          fontWeight: "bold",
-        }}
-      >
+      <div>
         Player: {username}
       </div>
+      <div className="lobby-section">
+        <h3>Connected Players ({livePlayers.length})</h3>
+        <ul>
+          {livePlayers.map((name) => (
+            <li key={name}>{name}</li>
+          ))}
+        </ul>
+      </div>
+
       <div className="instructions">Press ENTER to start the game</div>
     </div>
   );

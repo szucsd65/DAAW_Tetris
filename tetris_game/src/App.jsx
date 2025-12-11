@@ -172,30 +172,10 @@ function App() {
         </div>
 
         <div className="panel">
-          {status === "lobby" && (
-            <div
-              style={{
-                padding: "15px",
-                backgroundColor: "#0066ff",
-                borderRadius: "5px",
-                marginBottom: "20px",
-                textAlign: "center",
-                color: "white",
-              }}
-            >
-              Waiting to Start
-            </div>
-          )}
-
           {paused && (
             <div
               style={{
-                padding: "15px",
-                backgroundColor: "#ff9900",
-                borderRadius: "5px",
-                marginBottom: "20px",
-                textAlign: "center",
-                color: "white",
+                color: "#ff9900",
               }}
             >
               Paused
@@ -205,12 +185,7 @@ function App() {
           {gameOver && (
             <div
               style={{
-                padding: "15px",
-                backgroundColor: "#ff0000",
-                borderRadius: "5px",
-                marginBottom: "20px",
-                textAlign: "center",
-                color: "white",
+                color: "#ff0000",
               }}
             >
               Game Over
@@ -227,9 +202,7 @@ function App() {
             <div>Lines: {lines}</div>
           </div>
 
-          <div>
-            <div>Level: {level}</div>
-          </div>
+          
 
           <div className="help">
             <p>← → Move</p>

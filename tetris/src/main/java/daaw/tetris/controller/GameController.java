@@ -25,8 +25,6 @@ public class GameController {
         this.playerRegistry = playerRegistry;
     }
 
-    // ===== PLAYER MANAGEMENT =====
-
     @PostMapping("/players")
     public Map<String, Object> addPlayer(@RequestBody Map<String, String> body) {
         String username = body.get("username");
@@ -45,8 +43,6 @@ public class GameController {
         return Map.of("status", "removed", "username", username);
     }
 
-    // ===== RANKING ENDPOINTS =====
-
     @PostMapping("/rankings")
     public Ranking saveRanking(@RequestBody Ranking ranking) {
         return rankingRepository.save(ranking);
@@ -56,8 +52,6 @@ public class GameController {
     public List<Ranking> getTopRankings() {
         return rankingRepository.findTop10ByOrderByLevelDescLinesClearedDesc();
     }
-
-    // ===== GAME STATE (optional, Firebase is source of truth) =====
 
     private String gameStatus = "lobby";
 
@@ -71,8 +65,6 @@ public class GameController {
     public Map<String, String> getGameStatus() {
         return Map.of("status", gameStatus);
     }
-
-    // ===== LAST GAME RESULTS =====
 
     @GetMapping("/games/last")
     public List<Map<String, Object>> getLastGameResults() {

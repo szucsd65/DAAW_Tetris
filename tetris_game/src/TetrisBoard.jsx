@@ -17,8 +17,8 @@ const TetrisBoard = ({
   setGameOver,
   setLines,
   onLinesCleared,
-  username,          // currently unused but OK
-  incomingGarbage,   // you can handle this later
+  username,          
+  incomingGarbage,   
   gameSpeed,
   nextPiece,
   setNextPiece,
@@ -87,7 +87,6 @@ const TetrisBoard = ({
 
   const spawn = () => {
     const newPiece = nextPiece;
-    // schedule the following one
     setNextPiece(() => {
       const keys = Object.keys(SHAPES);
       const type = keys[Math.floor(Math.random() * keys.length)];

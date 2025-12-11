@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ref, onDisconnect, set } from "firebase/database";
+import { ref, onDisconnect, set, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -15,30 +15,31 @@ const UsernameInput = () => {
     if (saved) setUsername(saved);
   }, []);
 
-  const handleSubmit = (e) => {
-  e.preventDefault();
-  console.log("SUBMIT CLICKED");
-  const trimmed = username.trim();
-  if (!trimmed) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const trimmed = username.trim();
+    if (!trimmed) return;
 
-  localStorage.setItem("username", trimmed);
+    localStorage.setItem("username", trimmed);
 
-  navigate("/lobby");
+    navigate("/lobby");
 
-  axios
-    .post(`${API_URL}/api/players`, { username: trimmed })
-    .catch((err) => console.error("Failed to register player:", err));
+    axios
+      .post(`${API_URL}/api/players`, { username: trimmed })
+      .catch((err) => console.error("Failed to register player:", err));
 
-  try {
-    const playerRef = ref(db, `players/${trimmed}`);
-    set(playerRef, { username: trimmed, joinedAt: Date.now() })
-      .then(() => onDisconnect(playerRef).remove())
-      .catch((err) => console.error("Firebase player register failed", err));
-  } catch (err) {
-    console.error("Firebase error", err);
-  }
-};
-
+    try {
+      const playerRef = ref(db, `players/${trimmed}`);
+      await set(playerRef, {
+        username: trimmed,
+        state: "online",
+        joinedAt: serverTimestamp(),
+      });
+      onDisconnect(playerRef).remove();
+    } catch (err) {
+      console.error("Firebase error", err);
+    }
+  };
 
   return (
     <div style={{ color: "white", padding: "20px", textAlign: "center" }}>

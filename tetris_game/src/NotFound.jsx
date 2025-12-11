@@ -1,4 +1,3 @@
-// src/components/NotFound.jsx
 const NotFound = () => {
   return (
     <div style={{ color: 'white', padding: '20px', textAlign: 'center' }}>

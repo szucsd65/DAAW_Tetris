@@ -8,6 +8,5 @@ import java.util.List;
 @Repository
 public interface RankingRepository extends JpaRepository<Ranking, Long> {
     
-    // Find top 10 rankings sorted by level (descending) then lines cleared (descending)
     List<Ranking> findTop10ByOrderByLevelDescLinesClearedDesc();
 }

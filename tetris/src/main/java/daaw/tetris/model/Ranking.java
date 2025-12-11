@@ -35,7 +35,6 @@ public class Ranking {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Getters & Setters
     public Long getId() {
         return id;
     }
