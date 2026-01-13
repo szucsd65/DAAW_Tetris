@@ -14,7 +14,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173", "http://192.168.1.57:5173")
+                        .allowedOrigins("http://localhost:5173", "https://pelitic-unpresumptuous-francina.ngrok-free.dev")
                         .allowedMethods("GET","POST","DELETE","PUT","OPTIONS");
             }
         };

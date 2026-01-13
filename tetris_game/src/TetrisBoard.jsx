@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { ROWS, COLS, SPEED, SHAPES, COLORS } from "./constants";
 
+
+function randomPiece() {
+  const keys = Object.keys(SHAPES);
+  const type = keys[Math.floor(Math.random() * keys.length)];
+  return { type, rotation: 0, x: Math.floor(COLS / 2) - 2, y: 0 };
+}
+
 function rotate(piece, dir = 1) {
   const total = SHAPES[piece.type].length;
   return { ...piece, rotation: (piece.rotation + dir + total) % total };
@@ -11,6 +18,24 @@ function getMatrix(piece) {
   return SHAPES[piece.type][piece.rotation];
 }
 
+const applyGarbage = (baseBoard, garbageLines) => {
+  if (!garbageLines || garbageLines.length === 0) return baseBoard;
+
+  const amount = Math.min(garbageLines.length, ROWS);
+  const newBoard = [];
+
+
+  for (let i = 0; i < ROWS - amount; i++) {
+    newBoard[i] = baseBoard[i + amount];
+  }
+  
+  for (let i = 0; i < amount; i++) {
+    newBoard[ROWS - amount + i] = garbageLines[i];
+  }
+
+  return newBoard;
+};
+
 const TetrisBoard = ({
   paused,
   gameOver,
@@ -18,10 +43,12 @@ const TetrisBoard = ({
   setLines,
   onLinesCleared,
   username,          
-  incomingGarbage,   
+  incomingGarbage,
+  onGarbageApplied,  
   gameSpeed,
   nextPiece,
   setNextPiece,
+  gameStatus
 
 }) => {
   const [board, setBoard] = useState(
@@ -29,12 +56,6 @@ const TetrisBoard = ({
   );
 
   const [piece, setPiece] = useState(nextPiece);
-
-  useEffect(() => {
-    if (!piece && nextPiece) {
-      setPiece(nextPiece);
-    }
-  }, [nextPiece]);
 
   const collide = (b, p, offX = 0, offY = 0) => {
     const m = getMatrix(p);
@@ -74,56 +95,80 @@ const TetrisBoard = ({
 
 
   const clearLines = (b) => {
-    const rowsKept = b.filter((r) => r.some((c) => !c));
-    const cleared = ROWS - rowsKept.length;
-	
-    const newRows = Array.from({ length: cleared }, () =>
-      Array(COLS).fill(null)
-    );
+  const rowsKept = [];
+  let cleared = 0;
 
-    return { newBoard: [...newRows, ...rowsKept], cleared };
-  };
+  for (let row of b) {
+    const isFull = row.every(cell => cell !== null);
+    if (!isFull) {
+      rowsKept.push(row);
+    } else {
+      cleared++;
+    }
+  }
 
+  const newRows = Array.from({ length: cleared }, () =>
+    Array(COLS).fill(null)
+  );
+
+  return { newBoard: [...newRows, ...rowsKept], cleared };
+};
 
   const spawn = () => {
-    const newPiece = nextPiece;
-    setNextPiece(() => {
-      const keys = Object.keys(SHAPES);
-      const type = keys[Math.floor(Math.random() * keys.length)];
-      return { type, rotation: 0, x: 3, y: 0 };
-    });
-
-    if (collide(board, newPiece, 0, 0)) {
-      setGameOver(true);
-    } else {
-      setPiece(newPiece);
-    }
-  };
-
-  const stepDown = () => {
-    if (gameOver || paused) return;
-
-    if (!collide(board, piece, 0, 1)) {
-      setPiece((prev) => ({ ...prev, y: prev.y + 1 }));
-    } else {
-      const merged = merge(board, piece);
-      const { newBoard, cleared } = clearLines(merged);
-      setBoard(newBoard);
-      if (cleared > 0) { setLines((l) => l + cleared);
-        if (onLinesCleared) {
-          onLinesCleared(cleared);
-        }
-      }
-      spawn();
-    }
-  };
-
+  const newPiece = nextPiece;
+  setNextPiece(randomPiece());
+  if (collide(board, newPiece)) {
+    setGameOver(true);
+    return;
+  }
+  setPiece(newPiece);
+};
 
   useEffect(() => {
-    if (gameOver || paused || !piece) return;
-    const interval = setInterval(stepDown, gameSpeed);
-    return () => clearInterval(interval);
-  }, [gameOver, paused, gameSpeed, piece, board]);
+  spawn(); 
+}, []);
+
+  const stepDown = () => {
+  if (gameOver || paused || gameStatus !== "playing" || !piece) return;
+
+  if (!collide(board, piece, 0, 1)) {
+    setPiece(prev => ({ ...prev, y: prev.y + 1 }));
+    return;
+  }
+
+  let landedBoard = merge(board, piece);
+  
+  let { newBoard, cleared } = clearLines(landedBoard);
+  
+  if (incomingGarbage?.length > 0) {
+  newBoard = applyGarbage(newBoard, incomingGarbage);
+  onGarbageApplied();
+}
+
+
+  if (newBoard[0].some(cell => cell !== null)) {
+    setGameOver(true);
+    return;
+  }
+
+  if (cleared > 0) {
+    setLines(l => l + cleared);
+    onLinesCleared?.(cleared);
+  }
+  
+  setBoard(newBoard);
+  
+  spawn();
+};
+
+ useEffect(() => {
+  if (gameOver || paused || gameStatus !== "playing" || !piece) return;
+  
+  const interval = setInterval(stepDown, gameSpeed);
+  return () => {
+    clearInterval(interval);
+  };
+}, [gameOver, paused, gameStatus, piece, gameSpeed]);
 
 
   useEffect(() => {
@@ -145,12 +190,23 @@ const TetrisBoard = ({
       }
 
       if (e.code === "Space") {
+        e.preventDefault();
         let dy = 0;
         while (!collide(board, piece, 0, dy + 1)) dy++;
 
-        const landed = { ...piece, y: piece.y + dy };
-        const merged = merge(board, landed);
-        const { newBoard, cleared } = clearLines(merged);
+        let landed = { ...piece, y: piece.y + dy };
+        let merged = merge(board, landed);
+        let { newBoard, cleared } = clearLines(merged);
+
+        if (incomingGarbage?.length) {
+        newBoard = applyGarbage(newBoard, incomingGarbage);
+        onGarbageApplied?.();
+      }
+
+        if (newBoard[0].some(c => c)) {
+        setGameOver(true);
+        return;
+      }
 
         setBoard(newBoard);
         if (cleared > 0) { setLines((l) => l + cleared);
@@ -159,12 +215,13 @@ const TetrisBoard = ({
           }
         }
         spawn();
+        return;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [board, piece, paused, gameOver]);
+  }, [board, piece, paused, gameOver, incomingGarbage, onGarbageApplied, setLines, onLinesCleared]);
 
 
   const getRenderBoard = (board, piece) => {
@@ -186,7 +243,6 @@ const TetrisBoard = ({
     }
     return temp;
   };
-
 
   return (
     <div className="board">

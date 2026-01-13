@@ -4,7 +4,9 @@ import axios from "axios";
 import { ref, onValue, update, set } from "firebase/database";
 import { db } from "./firebase";
 
-const API_URL = "http://localhost:8080";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
 
 const Lobby = () => {
   const [players, setPlayers] = useState([]);
@@ -13,7 +15,9 @@ const Lobby = () => {
   const navigate = useNavigate();
   const username = localStorage.getItem("username") || "";
 
+
   const [livePlayers, setLivePlayers] = useState([]);
+
 
   const fetchData = async () => {
     try {
@@ -23,6 +27,7 @@ const Lobby = () => {
         axios.get(`${API_URL}/api/games/last`).catch(() => ({ data: null })),
       ]);
 
+
       setPlayers(playersRes.data || []);
       setRankings(rankingsRes.data || []);
       setLastGame(lastRes.data);
@@ -30,6 +35,7 @@ const Lobby = () => {
       console.error("Lobby data fetch error:", err);
     }
   };
+
 
   useEffect(() => {
     const playersRef = ref(db, "players");
@@ -41,14 +47,33 @@ const Lobby = () => {
     return () => unsub();
   }, []);
 
+
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
   }, []);
 
+
+  useEffect(() => {
+  const gameRef = ref(db, "game/state");
+
+
+  const unsub = onValue(gameRef, (snap) => {
+    const data = snap.val() || {};
+    if (!data.status) {
+      update(gameRef, { status: "lobby" });
+    }
+  });
+
+
+  return () => unsub();
+}, []);
+
+
   useEffect(() => {
     if (!username) return;
+
 
     const gameRef = ref(db, "game/state");
     const unsub = onValue(gameRef, (snap) => {
@@ -58,34 +83,43 @@ const Lobby = () => {
       }
     });
 
+
     return () => unsub();
   }, [username, navigate]);
-
-
+ 
   useEffect(() => {
-    if (!username) return;
+  if (!username) return;
 
-    const handleKey = async (e) => {
-      if (e.key === "Enter") {
-        try {
-          await update(ref(db, "game/state"), {
-            status: "playing",
-            startedBy: username,
-            startTime: Date.now(),
-          });
-        } catch (err) {
-          console.error("Failed to update game state", err);
-        }
+
+  const handleKey = async (e) => {
+    if (e.key === "Enter") {
+      if (livePlayers.length < 2) {
+        return;
       }
-    };
 
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [username]);
+
+      try {
+        await update(ref(db, "game/state"), {
+          status: "playing",
+          startedBy: username,
+          startTime: Date.now(),
+        });
+      } catch (err) {
+        console.error("Failed to update game state", err);
+      }
+    }
+  };
+
+
+  window.addEventListener("keydown", handleKey);
+  return () => window.removeEventListener("keydown", handleKey);
+}, [username, livePlayers]);
+
 
   useEffect(() => {
     const u = username;
     if (!u) return;
+
 
     const handler = () => {
       navigator.sendBeacon(`${API_URL}/api/players/${u}`, "");
@@ -94,6 +128,7 @@ const Lobby = () => {
     return () => window.removeEventListener("beforeunload", handler);
   }, [username]);
 
+
   useEffect(() => {
     if (username) {
       axios
@@ -101,26 +136,68 @@ const Lobby = () => {
         .catch((err) => console.error("Failed to register player:", err));
     }
   }, [username]);
-  
+ 
   return (
-    <div className="lobby-screen">
-      <h1>Game Lobby</h1>
-      <div>
-        Player: {username}
-      </div>
+  <div className="lobby-screen">
+    <h1 className="Text">Game Lobby</h1>
+    <div className="Text">Player: {username}</div>
+   
+    <div className="lobby-section">
+      <h3>Connected Players ({livePlayers.length})</h3>
+      <ul>
+        {livePlayers.map((name) => (
+          <li key={name}>{name}</li>
+        ))}
+      </ul>
+    </div>
+
+
+    {lastGame && (
       <div className="lobby-section">
-        <h3>Connected Players ({livePlayers.length})</h3>
+        <h3>Last Game Results</h3>
         <ul>
-          {livePlayers.map((name) => (
-            <li key={name}>{name}</li>
+          {lastGame.scores?.map((score, i) => (
+            <li key={i}>{score.name}: Level {score.level}, {score.lines} lines</li>
           ))}
         </ul>
       </div>
+    )}
 
-      <div className="instructions">Press ENTER to start the game</div>
-    </div>
-  );
+
+    {rankings.length > 0 && (
+  <div className="lobby-section">
+    <h3>Top Rankings</h3>
+    <table className="rankings-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>Level</th>
+          <th>Lines</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rankings.map((r, i) => (  
+          <tr key={r.id || i}>
+            <td>#{i + 1}</td>
+            <td>{r.playerName}</td>     
+            <td>{r.level}</td>
+            <td>{r.linesCleared}</td>   
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
+
+
+    <div className="Text">Press ENTER to start the game</div>
+  </div>
+);
+
+
 };
 
-export default Lobby;
 
+export default Lobby;

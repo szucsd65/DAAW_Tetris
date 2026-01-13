@@ -74,14 +74,14 @@ body {
     grid-template-rows: repeat(4, 18px);
     gap: 2px;
     margin-top: 6px;
-    background: #0f1628;
+    background: #28220f;
     padding: 4px;
     border-radius: 8px;
     border: 1px solid #0f172a;
 }
 
 .next-cell {
-    width: 18px;
+    width: fit-content;
     height: 18px;
     border-radius: 3px;
     border: 1px solid #0f172a;
@@ -105,12 +105,48 @@ body {
 .btn {
     padding: 8px 12px;
     border-radius: 10px;
-    border: 1px solid #334155;
+    border: 1px solid #ff0000;
     background: #0f172a;
-    color: white;
+    color: #ff0000;
     cursor: pointer;
 }
 
 .btn:hover {
     filter: brightness(1.1);
+}
+
+.lobby-section {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #ff0000;
+  color: #ff0000;
+  border-radius: 8px;
+}
+
+.rankings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.rankings-table th,
+.rankings-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 2px solid #ff0000;
+}
+
+.rankings-table th {
+  background: #f49696;
+  color: white;
+  font-weight: bold;
+}
+
+.rankings-table tr:hover {
+  background: #f9f9f9;
+  color: #0b1220;
+}
+
+.Text{
+    color: #ff0000;
 }

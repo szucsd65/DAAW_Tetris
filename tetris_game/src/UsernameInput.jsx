@@ -42,7 +42,7 @@ const UsernameInput = () => {
   };
 
   return (
-    <div style={{ color: "white", padding: "20px", textAlign: "center" }}>
+    <div style={{ color: "#ff0000", padding: "20px", textAlign: "center" }}>
       <h1>Tetris Multiplayer</h1>
       <form onSubmit={handleSubmit}>
         <input
@@ -52,11 +52,11 @@ const UsernameInput = () => {
           placeholder="Enter your username"
           required
           autoFocus
-          style={{ padding: "10px", fontSize: "16px" }}
+          style={{ color: "#ff0000", padding: "10px", fontSize: "16px", border: "1px solid #ff0000", background: "#0f172a"}}
         />
         <button
           type="submit"
-          style={{ padding: "10px 20px", marginLeft: "10px", fontSize: "16px" }}
+          style={{color: "#ff0000", padding: "10px 20px", marginLeft: "10px", fontSize: "16px", border: "1px solid #ff0000", background: "#0f172a", cursor: "pointer" }}
         >
           Join Lobby
         </button>

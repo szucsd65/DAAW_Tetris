@@ -1,6 +1,6 @@
 export const ROWS = 20;
 export const COLS = 10;
-export const SPEED = 300; // milisegundos por tick
+export const SPEED = 300;
 
 export const SHAPES = {
     I: [
@@ -105,4 +105,5 @@ export const COLORS = {
     J: "blue",
     S: "green",
     Z: "red",
+    garbage: "#666666",
 };

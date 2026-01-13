@@ -23,7 +23,6 @@ public class Ranking {
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
-    // Constructors
     public Ranking() {
         this.timestamp = LocalDateTime.now();
     }
